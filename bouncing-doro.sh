@@ -18,93 +18,78 @@ if [[ ! -f "$IMAGE" ]]; then
     exit 1
 fi
 
-# Pre-render the sprite with chafa
-# We use --symbols vhalf as requested. Size 15x10.
-# Render sprite — bigger size + full block for more detail
+# Render sprite — vhalf for smooth look, transparent bg
 SPRITE_SIZE="${DORO_SIZE:-30x20}"
-SPRITE_RAW=$(chafa --size "$SPRITE_SIZE" --symbols vhalf --colors 256 --color-space din99d "$IMAGE")
+SPRITE_RAW=$(chafa --size "$SPRITE_SIZE" --symbols vhalf --colors 256 --color-space din99d --bg 000000 --fill space "$IMAGE" 2>/dev/null || \
+             chafa --size "$SPRITE_SIZE" --symbols vhalf --colors 256 "$IMAGE")
 IFS=$'\n' read -rd '' -a SPRITE_LINES <<< "$SPRITE_RAW"
-# Calculate actual width from rendered output
 SPRITE_WIDTH="${SPRITE_SIZE%%x*}"
 SPRITE_HEIGHT=${#SPRITE_LINES[@]}
 
-# Colors
+# Colors for corner hits
 COLORS=('\033[38;5;213m' '\033[38;5;177m' '\033[38;5;201m' '\033[38;5;51m')
 COLOR_IDX=0
 
-# Cleanup function
+# Cleanup
 cleanup() {
-    tput cnorm  # Show cursor
-    tput rmcup  # Restore original screen buffer
+    tput cnorm
+    tput rmcup
     exit 0
 }
-
-trap cleanup SIGTERM SIGINT
+trap cleanup SIGTERM SIGINT EXIT
 
 # Initial position and velocity
-X=1
-Y=1
+X=2
+Y=2
 DX=1
 DY=1
 
-# Switch to alternate screen buffer (preserves original terminal content)
+# Switch to alternate screen + hide cursor + black background
 tput smcup
-# Hide cursor
 tput civis
+printf "\033[2J"  # Clear alternate screen
 
 while true; do
-    # Get terminal dimensions
     COLS=$(tput cols)
-    LINES=$(tput lines)
+    LINES_T=$(tput lines)
+    MAX_X=$((COLS - SPRITE_WIDTH))
+    MAX_Y=$((LINES_T - SPRITE_HEIGHT))
+    [[ $MAX_X -lt 2 ]] && MAX_X=2
+    [[ $MAX_Y -lt 2 ]] && MAX_Y=2
 
-    # Calculate boundaries
-    MAX_X=$((COLS - SPRITE_WIDTH + 1))
-    MAX_Y=$((LINES - SPRITE_HEIGHT + 1))
+    # Build entire frame in buffer to avoid flicker
+    FRAME=""
 
-    # Clear old sprite (only the characters we occupied)
+    # Clear old position
     for ((i=0; i<SPRITE_HEIGHT; i++)); do
-        printf "\033[%d;%dH" $((Y + i)) $X
-        printf "%${SPRITE_WIDTH}s" ""
+        FRAME+="\033[$((Y + i));${X}H$(printf '%*s' "$SPRITE_WIDTH" '')"
     done
 
     # Move
     ((X += DX))
     ((Y += DY))
 
-    HIT_CORNER=false
+    HIT_EDGE_X=false
+    HIT_EDGE_Y=false
 
-    # Bounce X
-    if ((X <= 1)); then
-        X=1
-        DX=$(( -DX ))
-        HIT_CORNER=true
-    elif ((X >= MAX_X)); then
-        X=$MAX_X
-        DX=$(( -DX ))
-        HIT_CORNER=true
-    fi
+    if ((X <= 1)); then X=1; DX=$((-DX)); HIT_EDGE_X=true; fi
+    if ((X >= MAX_X)); then X=$MAX_X; DX=$((-DX)); HIT_EDGE_X=true; fi
+    if ((Y <= 1)); then Y=1; DY=$((-DY)); HIT_EDGE_Y=true; fi
+    if ((Y >= MAX_Y)); then Y=$MAX_Y; DY=$((-DY)); HIT_EDGE_Y=true; fi
 
-    # Bounce Y
-    if ((Y <= 1)); then
-        Y=1
-        DY=$(( -DY ))
-        HIT_CORNER=true
-    elif ((Y >= MAX_Y)); then
-        Y=$MAX_Y
-        DY=$(( -DY ))
-        HIT_CORNER=true
-    fi
-
-    # Color shift on corner hit
-    if [ "$HIT_CORNER" = true ]; then
+    # Color shift on any edge hit
+    if [[ "$HIT_EDGE_X" == true ]] || [[ "$HIT_EDGE_Y" == true ]]; then
         COLOR_IDX=$(( (COLOR_IDX + 1) % ${#COLORS[@]} ))
     fi
 
-    # Draw new sprite
+    # Draw sprite at new position
     CURRENT_COLOR="${COLORS[$COLOR_IDX]}"
     for ((i=0; i<SPRITE_HEIGHT; i++)); do
-        printf "\033[%d;%dH%b%s\033[0m" $((Y + i)) $X "$CURRENT_COLOR" "${SPRITE_LINES[$i]}"
+        FRAME+="\033[$((Y + i));${X}H${CURRENT_COLOR}${SPRITE_LINES[$i]}\033[0m"
     done
+
+    # Flush entire frame at once — no flicker
+    printf '%b' "$FRAME"
 
     sleep 0.066
 done
