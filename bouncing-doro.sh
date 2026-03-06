@@ -28,14 +28,14 @@ DX=1
 DY=1
 
 cleanup() {
-    tput cnorm
+    printf '\033[?25h'  # ANSI show cursor
     tput rmcup
     exit 0
 }
 trap cleanup SIGTERM SIGINT EXIT
 
 tput smcup
-tput civis
+printf '\033[?25l'  # ANSI hide cursor (more reliable than tput civis)
 clear
 
 while true; do
@@ -64,6 +64,9 @@ while true; do
         tput cup $((Y + i)) $X
         printf "%b%s\033[0m" "$CURRENT_COLOR" "${SPRITE_LINES[$i]}"
     done
+
+    # Move cursor to bottom-right corner so it's not visible over Doro
+    tput cup $(tput lines) 0
 
     sleep 0.066
 done
