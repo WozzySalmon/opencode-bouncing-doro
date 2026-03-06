@@ -14,8 +14,14 @@ done
 [[ ! -f "$IMAGE" ]] && { echo "Error: Image not found at $IMAGE"; exit 1; }
 
 SPRITE_SIZE="${DORO_SIZE:-30x20}"
-SPRITE_RAW=$(chafa --size "$SPRITE_SIZE" --symbols vhalf --colors 256 "$IMAGE")
-IFS=$'\n' read -rd '' -a SPRITE_LINES <<< "$SPRITE_RAW"
+# Make white (FFFFFF) transparent, force black background
+SPRITE_RAW=$(chafa --size "$SPRITE_SIZE" --symbols vhalf --colors 256 --transparent FFFFFF "$IMAGE")
+# Strip trailing whitespace from each line to prevent flickering artifacts
+IFS=$'\n' read -rd '' -a SPRITE_RAW_LINES <<< "$SPRITE_RAW"
+SPRITE_LINES=()
+for line in "${SPRITE_RAW_LINES[@]}"; do
+    SPRITE_LINES+=("${line%%[[:space:]]}")
+done
 SPRITE_WIDTH="${SPRITE_SIZE%%x*}"
 SPRITE_HEIGHT=${#SPRITE_LINES[@]}
 
