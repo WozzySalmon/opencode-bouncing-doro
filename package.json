@@ -5,5 +5,8 @@
   "main": "plugin.ts",
   "author": "Mr.Bigg & Jess",
   "license": "MIT",
-  "keywords": ["opencode", "plugin", "doro", "dvd", "screensaver"]
+  "keywords": ["opencode", "plugin", "doro", "dvd", "screensaver"],
+  "dependencies": {
+    "@opencode-ai/plugin": "latest"
+  }
 }

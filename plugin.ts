@@ -1,3 +1,4 @@
+import type { Plugin } from "@opencode-ai/plugin"
 import { spawn, type ChildProcess } from "child_process"
 import path from "path"
 
@@ -28,13 +29,13 @@ function stopBouncing() {
   }
 }
 
-export const BouncingDoroPlugin = async ({ client }: any) => {
-  await client?.app?.log?.({
+export const BouncingDoroPlugin: Plugin = async ({ project, client, $, directory, worktree }) => {
+  await client.app.log({
     body: { service: "bouncing-doro", level: "info", message: "🩷 Bouncing Doro plugin loaded!" },
   })
 
   return {
-    event: async ({ event }: any) => {
+    event: async ({ event }) => {
       if (event.type === "session.updated" && event.properties?.status) {
         const status = event.properties.status
         if (status === "thinking" || status === "generating" || status === "busy" || status === "running") {
