@@ -1,0 +1,9 @@
+{
+  "name": "opencode-bouncing-doro",
+  "version": "1.0.0",
+  "description": "Bouncing Doro DVD screensaver while OpenCode thinks",
+  "main": "plugin.ts",
+  "author": "Mr.Bigg & Jess",
+  "license": "MIT",
+  "keywords": ["opencode", "plugin", "doro", "dvd", "screensaver"]
+}
