@@ -20,10 +20,12 @@ fi
 
 # Pre-render the sprite with chafa
 # We use --symbols vhalf as requested. Size 15x10.
-# We strip trailing newlines to make sure we know exactly how many lines it has.
-SPRITE_RAW=$(chafa --size 15x10 --symbols vhalf "$IMAGE")
+# Render sprite — bigger size + full block for more detail
+SPRITE_SIZE="${DORO_SIZE:-30x20}"
+SPRITE_RAW=$(chafa --size "$SPRITE_SIZE" --symbols block+border+space --colors 256 --color-space din99d "$IMAGE")
 IFS=$'\n' read -rd '' -a SPRITE_LINES <<< "$SPRITE_RAW"
-SPRITE_WIDTH=15
+# Calculate actual width from rendered output
+SPRITE_WIDTH="${SPRITE_SIZE%%x*}"
 SPRITE_HEIGHT=${#SPRITE_LINES[@]}
 
 # Colors
