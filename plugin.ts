@@ -19,7 +19,7 @@ function startBouncing() {
     // -w _ = brand new window (not a tab)
     doroProcess = spawn(
       "wt.exe",
-      ["-w", "_", "--title", "🩷 Doro", "--size", "35,22", "wsl.exe", "bash", scriptPath],
+      ["-w", "_", "--title", "🩷 Doro", "wsl.exe", "bash", scriptPath],
       { stdio: "ignore", detached: true },
     )
   } else {
