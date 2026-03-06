@@ -7,10 +7,30 @@ const scriptPath = path.join(__dirname, "bouncing-doro.sh")
 
 function startBouncing() {
   if (doroProcess) return
-  doroProcess = spawn(scriptPath, [], {
-    stdio: "inherit",
-    detached: true,
-  })
+
+  // On WSL, spawn in a new Windows Terminal window
+  // wt.exe opens a new terminal tab/window that won't conflict with Bubble Tea
+  const isWSL = require("fs").existsSync("/proc/version") &&
+    require("fs").readFileSync("/proc/version", "utf8").toLowerCase().includes("microsoft")
+
+  if (isWSL) {
+    doroProcess = spawn("wt.exe", [
+      "new-tab",
+      "--title", "🩷 Doro",
+      "--size", "25,15",
+      "wsl.exe", "bash", scriptPath,
+    ], {
+      stdio: "ignore",
+      detached: true,
+    })
+  } else {
+    // Native Linux: try a new terminal emulator
+    doroProcess = spawn("bash", [scriptPath], {
+      stdio: "inherit",
+      detached: true,
+    })
+  }
+
   doroProcess.on("error", (err) => {
     console.error("Bouncing Doro error:", err)
     doroProcess = null
@@ -18,13 +38,19 @@ function startBouncing() {
   doroProcess.on("exit", () => {
     doroProcess = null
   })
+  doroProcess.unref()
 }
 
 function stopBouncing() {
   if (doroProcess?.pid) {
     try {
+      // Kill the process group
       process.kill(-doroProcess.pid, "SIGTERM")
-    } catch (_) {}
+    } catch (_) {
+      try {
+        process.kill(doroProcess.pid, "SIGTERM")
+      } catch (_) {}
+    }
     doroProcess = null
   }
 }
@@ -52,10 +78,6 @@ export const BouncingDoroPlugin: Plugin = async ({ project, client, $, directory
 
     "tool.execute.before": async () => {
       startBouncing()
-    },
-
-    "tool.execute.after": async () => {
-      // Don't stop here — more tools might follow
     },
   }
 }
