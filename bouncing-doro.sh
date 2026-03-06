@@ -22,7 +22,7 @@ fi
 # We use --symbols vhalf as requested. Size 15x10.
 # Render sprite — bigger size + full block for more detail
 SPRITE_SIZE="${DORO_SIZE:-30x20}"
-SPRITE_RAW=$(chafa --size "$SPRITE_SIZE" --symbols block+border+space --colors 256 --color-space din99d "$IMAGE")
+SPRITE_RAW=$(chafa --size "$SPRITE_SIZE" --symbols vhalf --colors 256 --color-space din99d "$IMAGE")
 IFS=$'\n' read -rd '' -a SPRITE_LINES <<< "$SPRITE_RAW"
 # Calculate actual width from rendered output
 SPRITE_WIDTH="${SPRITE_SIZE%%x*}"
