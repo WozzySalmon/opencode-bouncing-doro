@@ -32,13 +32,8 @@ COLOR_IDX=0
 
 # Cleanup function
 cleanup() {
-    tput cnorm # Show cursor
-    tput rc    # Restore cursor position
-    # Clear the last drawn sprite area (brute force clear current line range)
-    for ((i=0; i<SPRITE_HEIGHT; i++)); do
-        printf "\033[%d;%dH" $((Y + i)) $X
-        printf "%${SPRITE_WIDTH}s" ""
-    done
+    tput cnorm  # Show cursor
+    tput rmcup  # Restore original screen buffer
     exit 0
 }
 
@@ -50,9 +45,10 @@ Y=1
 DX=1
 DY=1
 
-# Hide cursor and save position
+# Switch to alternate screen buffer (preserves original terminal content)
+tput smcup
+# Hide cursor
 tput civis
-tput sc
 
 while true; do
     # Get terminal dimensions
