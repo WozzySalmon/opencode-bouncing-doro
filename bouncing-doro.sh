@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Default image path
-IMAGE="/home/jess/dorofetch/logos/doro.png"
+# Default image path — look next to this script first
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+IMAGE="${SCRIPT_DIR}/doro.png"
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
